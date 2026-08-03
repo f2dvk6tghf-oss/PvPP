@@ -1,0 +1,23 @@
+APPLICATION PVI / PV — FICHIERS À ENVOYER SUR GITHUB
+
+Envoie directement à la racine de ton dépôt les 6 fichiers suivants :
+- index.html
+- manifest.json
+- service-worker.js
+- icon-192.png
+- icon-512.png
+- apple-touch-icon.png
+
+Important :
+1. Les noms doivent rester exactement identiques.
+2. Ne crée pas de sous-dossier.
+3. Dans GitHub Pages, sélectionne :
+   Branch : main
+   Folder : / (root)
+4. Après le dépôt des fichiers, attends environ une minute puis recharge le site.
+5. Sur iPhone, ouvre le site dans Safari puis :
+   Partager > Sur l’écran d’accueil.
+
+Le fichier index.html contient toute l’application et tous les boutons.
+Le manifest et les icônes permettent l’installation sur l’iPhone.
+Le service-worker permet le fonctionnement hors connexion après une première ouverture.

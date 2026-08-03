@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#071827">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PVI">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <title>Générateur PVI / PV</title>
+  <style>
+    :root{
+      --bg:#06131f;--panel:#0d2235;--panel2:#102b43;--text:#f7fbff;
+      --muted:#aac0d3;--line:rgba(255,255,255,.13);--blue:#2f8cff;
+      --blue2:#69b7ff;--green:#38cf96;--red:#ff6b6b;--yellow:#ffd166;
+      --shadow:0 14px 38px rgba(0,0,0,.30)
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;min-height:100vh;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,
+      "Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:
+      radial-gradient(circle at top right,#123b5e 0,transparent 35%),
+      linear-gradient(180deg,#071827 0,#04101a 100%);
+    }
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    .app{max-width:920px;margin:auto;padding:calc(18px + env(safe-area-inset-top)) 14px calc(110px + env(safe-area-inset-bottom))}
+    .hero{display:flex;align-items:center;gap:13px;margin-bottom:16px}
+    .badge{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;
+      background:linear-gradient(145deg,#2f8cff,#1552a8);box-shadow:var(--shadow);font-size:26px}
+    h1{font-size:25px;line-height:1.15;margin:0}
+    .subtitle{font-size:13px;color:var(--muted);margin-top:4px}
+    .card{background:linear-gradient(180deg,rgba(16,43,67,.98),rgba(10,31,49,.98));
+      border:1px solid var(--line);border-radius:20px;padding:16px;margin:12px 0;box-shadow:var(--shadow)}
+    .card h2{font-size:17px;margin:0 0 14px;display:flex;align-items:center;justify-content:space-between}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .full{grid-column:1/-1}
+    label.field{display:block}
+    label.field span{display:block;color:var(--muted);font-size:12px;font-weight:700;margin:0 0 6px}
+    input[type=text],input[type=date],input[type=time],input[type=number],select,textarea{
+      width:100%;border:1px solid var(--line);border-radius:13px;background:#071a2a;color:var(--text);
+      padding:13px 12px;outline:none;min-height:46px
+    }
+    input:focus,select:focus,textarea:focus{border-color:var(--blue2);box-shadow:0 0 0 3px rgba(47,140,255,.16)}
+    textarea{min-height:96px;resize:vertical}
+    .choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+    .choice{position:relative}
+    .choice input{position:absolute;opacity:0;pointer-events:none}
+    .choice label{display:flex;align-items:center;gap:9px;min-height:48px;padding:11px;border-radius:13px;
+      border:1px solid var(--line);background:#071a2a;color:#dbe9f5;font-weight:700;font-size:14px}
+    .choice label:before{content:"";width:19px;height:19px;border-radius:6px;border:2px solid #7290a7;flex:0 0 auto}
+    .choice input:checked+label{border-color:var(--blue2);background:rgba(47,140,255,.14);color:#fff}
+    .choice input:checked+label:before{background:var(--blue);border-color:var(--blue);box-shadow:inset 0 0 0 4px #0d2235}
+    .hidden{display:none!important}
+    .row-item{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:9px}
+    .btn{border:0;border-radius:14px;padding:13px 15px;font-weight:800;color:#fff;background:#213b51}
+    .btn.primary{background:linear-gradient(145deg,var(--blue),#1766ca)}
+    .btn.green{background:linear-gradient(145deg,var(--green),#148c62)}
+    .btn.red{background:linear-gradient(145deg,#ff7070,#c63535)}
+    .btn.ghost{background:#071a2a;border:1px solid var(--line)}
+    .btn.small{padding:9px 12px;border-radius:11px}
+    .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+    .result{white-space:pre-wrap;background:#020b12;border:1px solid var(--line);border-radius:15px;
+      padding:15px;min-height:220px;color:#f7fbff;line-height:1.55;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+    .sticky{position:fixed;z-index:20;left:0;right:0;bottom:0;padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+      background:linear-gradient(180deg,transparent,rgba(2,11,18,.96) 25%)}
+    .sticky-inner{max-width:920px;margin:auto;display:grid;grid-template-columns:1.35fr 1fr 52px;gap:9px}
+    .toast{position:fixed;left:50%;bottom:105px;transform:translate(-50%,20px);opacity:0;
+      background:#fff;color:#06131f;padding:11px 15px;border-radius:999px;font-weight:800;transition:.22s;z-index:50}
+    .toast.show{opacity:1;transform:translate(-50%,0)}
+    .note{font-size:12px;color:var(--muted);line-height:1.45;margin-top:8px}
+    .pill{font-size:11px;color:#bfe1ff;background:rgba(47,140,255,.16);border:1px solid rgba(105,183,255,.35);
+      padding:5px 8px;border-radius:999px}
+    @media(max-width:650px){
+      .grid,.choices{grid-template-columns:1fr}
+      .actions{grid-template-columns:1fr}
+      .card{padding:14px}
+      .sticky-inner{grid-template-columns:1fr 1fr 50px}
+      .sticky .btn{padding:12px 8px;font-size:13px}
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="hero">
+    <div class="badge">🛡️</div>
+    <div>
+      <h1>Générateur PVI / PV</h1>
+      <div class="subtitle">Formulaire autonome – fonctionne sans serveur</div>
+    </div>
+  </header>
+
+  <section class="card">
+    <h2>1. Type de procédure <span class="pill">obligatoire</span></h2>
+    <div class="choices">
+      <div class="choice"><input type="radio" name="typePV" id="typePVI" value="PVI" checked><label for="typePVI">PVI</label></div>
+      <div class="choice"><input type="radio" name="typePV" id="typeTransport" value="PV de transport et constatations"><label for="typeTransport">PV transport / constatations</label></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>2. Mission et équipage</h2>
+    <div class="grid">
+      <label class="field"><span>DATE</span><input id="dateService" type="date"></label>
+      <label class="field"><span>INDICATIF</span><input id="indicatif" type="text" placeholder="Ex. BAC 31 / TN 212"></label>
+      <label class="field"><span>RÉDACTEUR</span><input id="redacteur" type="text" placeholder="Grade, nom, matricule"></label>
+      <label class="field"><span>SERVICE / UNITÉ</span><input id="service" type="text" placeholder="Ex. Brigade de nuit"></label>
+      <div class="full">
+        <label class="field"><span>COLLÈGUES DE LA PATROUILLE</span></label>
+        <div id="collegues"></div>
+        <button class="btn ghost small" id="addCollegue" type="button">＋ Ajouter un collègue</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>3. Lieux et horaires</h2>
+    <div class="grid">
+      <label class="field full"><span>LIEU DES FAITS / INTERVENTION</span><input id="lieu" type="text" placeholder="Adresse complète"></label>
+      <label class="field"><span>HEURE D’ARRIVÉE SUR PLACE</span><input id="heureArrivee" type="time"></label>
+      <label class="field"><span>HEURE D’INTERPELLATION</span><input id="heureInterpellation" type="time"></label>
+      <label class="field"><span>HEURE DE L’AVIS</span><input id="heureAvis" type="time"></label>
+      <label class="field"><span>DESTINATAIRE DE L’AVIS</span><input id="destAvis" type="text" placeholder="OPJ / permanence / magistrat"></label>
+    </div>
+    <div class="note">L’heure d’interpellation sera automatiquement écrite en toutes lettres, puis en chiffres entre parenthèses.</div>
+  </section>
+
+  <section class="card">
+    <h2>4. Cadre d’intervention</h2>
+    <div class="choices">
+      <div class="choice"><input id="flagrance" type="checkbox"><label for="flagrance">Flagrant délit – art. 53 et suivants CPP</label></div>
+      <div class="choice"><input id="controleRoutier" type="checkbox"><label for="controleRoutier">Contrôle routier</label></div>
+      <div class="choice"><input id="avertisseurs" type="checkbox"><label for="avertisseurs">Avertisseurs sonores et lumineux</label></div>
+      <div class="choice"><input id="stationnement" type="checkbox"><label for="stationnement">Véhicule invité à stationner</label></div>
+      <div class="choice"><input id="permis" type="checkbox"><label for="permis">Infraction liée au permis de conduire</label></div>
+      <div class="choice"><input id="poursuite" type="checkbox"><label for="poursuite">Suivi / poursuite du véhicule</label></div>
+    </div>
+    <div id="routeBloc" class="grid hidden" style="margin-top:12px">
+      <label class="field full"><span>VÉHICULE CONTRÔLÉ</span><input id="vehicule" type="text" placeholder="Marque, modèle, couleur, immatriculation"></label>
+      <label class="field full"><span>MOTIF DU CONTRÔLE / INFRACTION</span><textarea id="motifControle" placeholder="Circonstances observées, comportement, infraction..."></textarea></label>
+      <label class="field full"><span>BASE LÉGALE À FAIRE FIGURER</span><input id="baseRoute" type="text" value="articles L. 233-1 et R. 233-1 du Code de la route"></label>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>5. Interpellation et sécurité</h2>
+    <div class="choices">
+      <div class="choice"><input id="interpelle" type="checkbox"><label for="interpelle">Interpellation réalisée</label></div>
+      <div class="choice"><input id="menottage" type="checkbox"><label for="menottage">Menottage – art. 803 CPP</label></div>
+      <div class="choice"><input id="danger" type="checkbox"><label for="danger">Danger pour lui-même / autrui</label></div>
+      <div class="choice"><input id="fuite" type="checkbox"><label for="fuite">Risque de fuite</label></div>
+      <div class="choice"><input id="resistance" type="checkbox"><label for="resistance">Résistance / opposition</label></div>
+      <div class="choice"><input id="fouille" type="checkbox"><label for="fouille">Palpation de sécurité</label></div>
+    </div>
+    <div class="grid" style="margin-top:12px">
+      <label class="field full"><span>PERSONNE MISE EN CAUSE</span><input id="auteur" type="text" value="F3"></label>
+      <label class="field full"><span>CIRCONSTANCES DE L’INTERPELLATION</span><textarea id="circonstances" placeholder="Décrire précisément les gestes, injonctions, comportement et moyens employés."></textarea></label>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>6. Blessés et constatations</h2>
+    <div class="choices">
+      <div class="choice"><input type="radio" name="blesse" id="aucunBlesse" value="Aucun blessé" checked><label for="aucunBlesse">Aucun blessé</label></div>
+      <div class="choice"><input type="radio" name="blesse" id="blesseOui" value="Blessé(s)"><label for="blesseOui">Présence de blessé(s)</label></div>
+    </div>
+    <div id="blesseBloc" class="grid hidden" style="margin-top:12px">
+      <label class="field"><span>VICTIME / BLESSÉ</span><input id="victime" type="text" value="F3"></label>
+      <label class="field"><span>SECOURS / TRANSPORT</span><input id="secours" type="text" placeholder="BSPP, SAMU, hôpital..."></label>
+      <label class="field full"><span>NATURE APPARENTE DES BLESSURES</span><textarea id="blessures" placeholder="Constatations sans diagnostic médical."></textarea></label>
+    </div>
+    <div class="grid" style="margin-top:12px">
+      <label class="field full"><span>CONSTATATIONS MATÉRIELLES</span><textarea id="constatations" placeholder="État des lieux, objets, traces, dégâts, saisies..."></textarea></label>
+      <label class="field full"><span>DÉCLARATIONS / ÉLÉMENTS UTILES</span><textarea id="declarations" placeholder="Déclarations spontanées, témoins, vidéos, recherches..."></textarea></label>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>7. Suite donnée</h2>
+    <div class="grid">
+      <label class="field"><span>OPJ / SERVICE AVISÉ</span><input id="opj" type="text" placeholder="Identité ou service"></label>
+      <label class="field"><span>INSTRUCTIONS REÇUES</span><input id="instructions" type="text" placeholder="Conduite à tenir"></label>
+      <label class="field full"><span>DESTINATION / TRANSPORT</span><input id="destination" type="text" placeholder="Commissariat, UMJ, hôpital..."></label>
+      <label class="field full"><span>OBSERVATIONS COMPLÉMENTAIRES</span><textarea id="observations" placeholder="Tout élément supplémentaire utile."></textarea></label>
+    </div>
+  </section>
+
+  <section class="card" id="resultCard">
+    <h2>PV généré</h2>
+    <div id="resultat" class="result">Remplis les champs puis appuie sur « Générer le PV ».</div>
+    <div class="actions">
+      <button class="btn primary" id="generate" type="button">⚡ Générer le PV</button>
+      <button class="btn green" id="copy" type="button">📋 Copier le texte</button>
+      <button class="btn ghost" id="selectAll" type="button">Tout sélectionner</button>
+      <button class="btn red" id="reset" type="button">Nouveau PV</button>
+    </div>
+  </section>
+</div>
+
+<div class="sticky">
+  <div class="sticky-inner">
+    <button class="btn primary" id="generateBottom" type="button">⚡ Générer</button>
+    <button class="btn green" id="copyBottom" type="button">📋 Copier</button>
+    <button class="btn red" id="resetBottom" type="button" aria-label="Nouveau PV">↻</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const q = sel => document.querySelector(sel);
+  const qa = sel => [...document.querySelectorAll(sel)];
+  const val = id => $(id).value.trim();
+  const checked = id => $(id).checked;
+
+  const toast = msg => {
+    $("toast").textContent = msg;
+    $("toast").classList.add("show");
+    setTimeout(() => $("toast").classList.remove("show"), 1700);
+  };
+
+  function addCollegue(value=""){
+    const row = document.createElement("div");
+    row.className = "row-item";
+    row.innerHTML = '<input class="collegue" type="text" placeholder="Grade, nom, matricule" value="'+
+      value.replace(/"/g,"&quot;")+'"><button type="button" class="btn red small remove">✕</button>';
+    row.querySelector(".remove").addEventListener("click",()=>row.remove());
+    $("collegues").appendChild(row);
+  }
+
+  function two(n){ return String(n).padStart(2,"0"); }
+
+  function heureEnLettres(time){
+    if(!time) return "";
+    const parts=time.split(":");
+    const h=parseInt(parts[0],10), m=parseInt(parts[1],10);
+    const nums=["zéro","une","deux","trois","quatre","cinq","six","sept","huit","neuf","dix","onze","douze",
+      "treize","quatorze","quinze","seize","dix-sept","dix-huit","dix-neuf","vingt","vingt et une","vingt-deux","vingt-trois",
+      "vingt-quatre","vingt-cinq","vingt-six","vingt-sept","vingt-huit","vingt-neuf","trente","trente et une","trente-deux",
+      "trente-trois","trente-quatre","trente-cinq","trente-six","trente-sept","trente-huit","trente-neuf","quarante",
+      "quarante et une","quarante-deux","quarante-trois","quarante-quatre","quarante-cinq","quarante-six","quarante-sept",
+      "quarante-huit","quarante-neuf","cinquante","cinquante et une","cinquante-deux","cinquante-trois","cinquante-quatre",
+      "cinquante-cinq","cinquante-six","cinquante-sept","cinquante-huit","cinquante-neuf"];
+    const hs = h===1 ? "une heure" : nums[h]+" heures";
+    const ms = m===0 ? "" : (m===1 ? " une minute" : " "+nums[m]+" minutes");
+    return hs+ms;
+  }
+
+  function dateFr(date){
+    if(!date) return "";
+    const d=new Date(date+"T12:00:00");
+    return d.toLocaleDateString("fr-FR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+  }
+
+  function phraseList(items){
+    items=items.filter(Boolean);
+    if(items.length===0) return "";
+    if(items.length===1) return items[0];
+    return items.slice(0,-1).join(", ")+" et "+items.at(-1);
+  }
+
+  function generate(){
+    const type=q('input[name="typePV"]:checked').value;
+    const collegues=qa(".collegue").map(x=>x.value.trim()).filter(Boolean);
+    const blesse=q('input[name="blesse"]:checked').value;
+    const lines=[];
+
+    lines.push(type.toUpperCase());
+    lines.push("");
+    lines.push("L’an "+(val("dateService") ? dateFr(val("dateService")) : "[DATE]")+",");
+    lines.push("");
+    lines.push("Nous, "+(val("redacteur")||"[RÉDACTEUR]")+", en fonction au "+(val("service")||"[SERVICE / UNITÉ]")+
+      ", agissant dans le cadre de nos attributions, étant de patrouille sous l’indicatif "+(val("indicatif")||"[INDICATIF]")+
+      (collegues.length ? ", assisté de "+phraseList(collegues) : "")+", rapportons les opérations suivantes :");
+    lines.push("");
+
+    if(val("heureArrivee") || val("lieu")){
+      lines.push("À "+(val("heureArrivee")||"[HEURE]")+", nous nous trouvons "+(val("lieu") ? "à "+val("lieu") : "sur les lieux")+".");
+    }
+
+    if(checked("controleRoutier")){
+      let p="Dans le cadre d’un contrôle routier";
+      if(val("baseRoute")) p+=" fondé sur "+val("baseRoute");
+      p+=", nous portons notre attention sur "+(val("vehicule")||"un véhicule")+".";
+      lines.push(p);
+      if(checked("avertisseurs")) lines.push("Nous faisons usage des avertisseurs sonores et lumineux réglementaires afin de signaler notre présence et notre intention de procéder au contrôle.");
+      if(checked("stationnement")) lines.push("Nous faisons signe au conducteur de ralentir puis de stationner son véhicule en sécurité afin de procéder aux vérifications.");
+      if(checked("poursuite")) lines.push("Le véhicule est suivi afin de permettre son interception dans des conditions garantissant la sécurité des usagers.");
+      if(checked("permis")) lines.push("Le contrôle porte notamment sur la situation du conducteur au regard de son droit à conduire et des documents afférents.");
+      if(val("motifControle")) lines.push("Motif et circonstances du contrôle : "+val("motifControle"));
+    }
+
+    if(checked("flagrance")){
+      lines.push("Agissant en flagrant délit conformément aux dispositions de l’article 53 et suivants du Code de procédure pénale, nous poursuivons nos constatations.");
+    }
+
+    if(val("constatations")) lines.push("Constatons ce qui suit : "+val("constatations"));
+    if(val("declarations")) lines.push("Recueillons les éléments suivants : "+val("declarations"));
+
+    if(checked("interpelle")){
+      const person=val("auteur")||"F3";
+      let p="Procédons à l’interpellation de "+person;
+      if(val("heureInterpellation")) p+=" à "+heureEnLettres(val("heureInterpellation"))+" ("+val("heureInterpellation")+")";
+      p+=".";
+      lines.push(p);
+      if(val("circonstances")) lines.push("Circonstances de l’interpellation : "+val("circonstances"));
+      if(checked("fouille")) lines.push("Une palpation de sécurité est réalisée afin de rechercher tout objet dangereux pour la personne interpellée, les fonctionnaires ou les tiers.");
+      if(checked("menottage")){
+        const motifs=[];
+        if(checked("danger")) motifs.push("sa dangerosité potentielle pour lui-même ou pour autrui");
+        if(checked("fuite")) motifs.push("le risque de fuite");
+        if(checked("resistance")) motifs.push("son opposition et sa résistance");
+        lines.push("Conformément à l’article 803 du Code de procédure pénale, procédons à son menottage en raison de "+(motifs.length?phraseList(motifs):"la nécessité d’assurer la sécurité et de prévenir toute tentative de fuite")+".");
+      }
+    }
+
+    if(blesse==="Aucun blessé"){
+      lines.push("Aucun blessé n’est constaté ou signalé au cours de l’intervention.");
+    }else{
+      lines.push("Constatons la présence d’une personne blessée désignée "+(val("victime")||"F3")+".");
+      if(val("blessures")) lines.push("Blessures apparentes constatées, sans préjuger d’un diagnostic médical : "+val("blessures"));
+      if(val("secours")) lines.push("Les secours suivants sont sollicités / interviennent : "+val("secours")+".");
+    }
+
+    if(val("heureAvis") || val("destAvis") || val("opj")){
+      lines.push("À "+(val("heureAvis")||"[HEURE DE L’AVIS]")+", avisons "+(val("destAvis")||val("opj")||"[DESTINATAIRE DE L’AVIS]")+".");
+    }
+    if(val("instructions")) lines.push("Recevons pour instructions : "+val("instructions")+".");
+    if(val("destination")) lines.push("La personne / les éléments sont acheminés vers "+val("destination")+".");
+    if(val("observations")) lines.push("Observations complémentaires : "+val("observations"));
+    lines.push("");
+    lines.push("Dont procès-verbal.");
+    lines.push("");
+    lines.push("Le rédacteur,");
+    lines.push(val("redacteur")||"[SIGNATURE]");
+
+    $("resultat").textContent=lines.join("\n");
+    $("resultCard").scrollIntoView({behavior:"smooth",block:"start"});
+    toast("PV généré");
+    saveLocal();
+  }
+
+  async function copyText(){
+    const text=$("resultat").textContent;
+    if(!text || text.startsWith("Remplis les champs")){
+      toast("Génère d’abord le PV");
+      return;
+    }
+    try{
+      await navigator.clipboard.writeText(text);
+      toast("Texte copié");
+    }catch(e){
+      const r=document.createRange(); r.selectNodeContents($("resultat"));
+      const s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      document.execCommand("copy"); s.removeAllRanges();
+      toast("Texte copié");
+    }
+  }
+
+  function selectAllText(){
+    const r=document.createRange(); r.selectNodeContents($("resultat"));
+    const s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    toast("Texte sélectionné");
+  }
+
+  function resetForm(){
+    if(!confirm("Effacer tous les champs et commencer un nouveau PV ?")) return;
+    qa("input[type=text], input[type=time], input[type=date], textarea").forEach(el=>el.value="");
+    qa("input[type=checkbox]").forEach(el=>el.checked=false);
+    $("typePVI").checked=true; $("aucunBlesse").checked=true;
+    $("auteur").value="F3"; $("victime").value="F3";
+    $("baseRoute").value="articles L. 233-1 et R. 233-1 du Code de la route";
+    $("collegues").innerHTML=""; addCollegue();
+    $("routeBloc").classList.add("hidden"); $("blesseBloc").classList.add("hidden");
+    $("resultat").textContent="Remplis les champs puis appuie sur « Générer le PV ».";
+    localStorage.removeItem("pvFormV2");
+    setToday();
+    window.scrollTo({top:0,behavior:"smooth"});
+    toast("Nouveau PV");
+  }
+
+  function saveLocal(){
+    const data={};
+    qa("input,textarea,select").forEach(el=>{
+      if(el.type==="radio"){
+        if(el.checked)data[el.name]=el.value;
+      }else if(el.type==="checkbox") data[el.id]=el.checked;
+      else if(el.classList.contains("collegue")) return;
+      else if(el.id) data[el.id]=el.value;
+    });
+    data.collegues=qa(".collegue").map(x=>x.value);
+    localStorage.setItem("pvFormV2",JSON.stringify(data));
+  }
+
+  function restoreLocal(){
+    try{
+      const data=JSON.parse(localStorage.getItem("pvFormV2")||"null");
+      if(!data)return;
+      Object.entries(data).forEach(([k,v])=>{
+        if(k==="collegues")return;
+        const el=$(k);
+        if(el){
+          if(el.type==="checkbox")el.checked=!!v;
+          else el.value=v;
+        }else{
+          const radio=q('input[name="'+k+'"][value="'+CSS.escape(String(v))+'"]');
+          if(radio)radio.checked=true;
+        }
+      });
+      $("collegues").innerHTML="";
+      (data.collegues||[""]).forEach(addCollegue);
+    }catch(e){}
+  }
+
+  function setToday(){
+    if(!$("dateService").value){
+      const d=new Date();
+      $("dateService").value=d.getFullYear()+"-"+two(d.getMonth()+1)+"-"+two(d.getDate());
+    }
+  }
+
+  $("addCollegue").addEventListener("click",()=>addCollegue());
+  ["generate","generateBottom"].forEach(id=>$(id).addEventListener("click",generate));
+  ["copy","copyBottom"].forEach(id=>$(id).addEventListener("click",copyText));
+  $("selectAll").addEventListener("click",selectAllText);
+  ["reset","resetBottom"].forEach(id=>$(id).addEventListener("click",resetForm));
+
+  ["controleRoutier","permis","avertisseurs","stationnement","poursuite"].forEach(id=>{
+    $(id).addEventListener("change",()=>{
+      const show=["controleRoutier","permis","avertisseurs","stationnement","poursuite"].some(checked);
+      $("routeBloc").classList.toggle("hidden",!show);
+      saveLocal();
+    });
+  });
+  qa('input[name="blesse"]').forEach(el=>el.addEventListener("change",()=>{
+    $("blesseBloc").classList.toggle("hidden",!$("blesseOui").checked);
+    saveLocal();
+  }));
+  document.addEventListener("input",e=>{
+    if(e.target.matches("input,textarea,select")) saveLocal();
+  });
+
+  addCollegue();
+  restoreLocal();
+  setToday();
+  $("routeBloc").classList.toggle("hidden",!["controleRoutier","permis","avertisseurs","stationnement","poursuite"].some(checked));
+  $("blesseBloc").classList.toggle("hidden",!$("blesseOui").checked);
+})();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("./service-worker.js").catch(function (error) {
+      console.warn("Service worker non enregistré :", error);
+    });
+  });
+}
+</script>
+
+</body>
+</html>
